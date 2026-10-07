@@ -72,9 +72,9 @@ public class MainActivity extends Activity {
 
         LinearLayout settings=card(); root.addView(settings);
         settings.addView(t("Settings",17,TEXT,true));
-        settings.addView(labelPad("ICR — grams per unit",12)); icr=number(String.valueOf(prefs.getFloat("icr",6f))); settings.addView(icr);
-        settings.addView(labelPad("ISF — mmol/L per unit",12)); isf=number(String.valueOf(prefs.getFloat("isf",3.7f))); settings.addView(isf);
-        settings.addView(labelPad("Recovery target — mmol/L",12)); target=number(String.valueOf(prefs.getFloat("target",6.5f))); settings.addView(target);
+        settings.addView(labelPad("ICR — grams per unit",12)); icr=number(prefs.contains("icr")?String.valueOf(prefs.getFloat("icr",0f)):""); settings.addView(icr);
+        settings.addView(labelPad("ISF — mmol/L per unit",12)); isf=number(prefs.contains("isf")?String.valueOf(prefs.getFloat("isf",0f)):""); settings.addView(isf);
+        settings.addView(labelPad("Recovery target — mmol/L",12)); target=number(prefs.contains("target")?String.valueOf(prefs.getFloat("target",0f)):""); settings.addView(target);
         Button save=button("Save settings"); save.setOnClickListener(v->{ saveSettings(); assess(); Toast.makeText(this,"Saved",Toast.LENGTH_SHORT).show(); }); settings.addView(save);
 
         TextView foot=t("Experimental personal decision aid only. If you are actually hypo, use your established hypo treatment plan rather than this calculation.",12,MUTED,false);
@@ -124,7 +124,8 @@ public class MainActivity extends Activity {
 
     private void assess(){
         Object bgTag=glucose.getTag(); if(!(bgTag instanceof Double)){ risk.setText("Waiting for GDH"); return; }
-        double bg=(Double)bgTag, insulin=parse(iob,0), ICR=parse(icr,6), ISF=parse(isf,3.7), tgt=parse(target,6.5);
+        double bg=(Double)bgTag, insulin=parse(iob,0), ICR=parse(icr,Double.NaN), ISF=parse(isf,Double.NaN), tgt=parse(target,Double.NaN);
+        if(Double.isNaN(ICR)||Double.isNaN(ISF)||Double.isNaN(tgt)||ICR<=0||ISF<=0){ risk.setText("Enter settings once"); eq.setText("—"); buffer.setText("—"); fast.setText("Set ICR, ISF and recovery target below, then tap Save settings."); slow.setText("These values are stored only on this phone."); why.setText(""); return; }
         double a=tag(d1), b=tag(d5), c=tag(d15);
         double rate=(safe(c)/15)*.55+(safe(b)/5)*.35+safe(a)*.10;
         int ts=0; String trend="Stable";
@@ -148,7 +149,7 @@ public class MainActivity extends Activity {
         why.setText(bg<4?"The calculator deliberately steps back once glucose is below 4.0.":ts>=3&&insulin>=1?"Sustained downward momentum and meaningful IOB point the same way.":ts>=2?"The longer CGM windows support a genuine downward trend.":insulin>=1?"CGM is fairly calm, but meaningful IOB remains.":"Little evidence of strong downward pressure right now.");
     }
 
-    private void saveSettings(){ prefs.edit().putFloat("icr",(float)parse(icr,6)).putFloat("isf",(float)parse(isf,3.7)).putFloat("target",(float)parse(target,6.5)).apply(); }
+    private void saveSettings(){ double a=parse(icr,Double.NaN), b=parse(isf,Double.NaN), c=parse(target,Double.NaN); if(Double.isNaN(a)||Double.isNaN(b)||Double.isNaN(c)||a<=0||b<=0){ Toast.makeText(this,"Enter valid ICR, ISF and target",Toast.LENGTH_SHORT).show(); return; } prefs.edit().putFloat("icr",(float)a).putFloat("isf",(float)b).putFloat("target",(float)c).apply(); }
     private static double toMmol(double v){ return v>35?v/18.0:v; }
     private static Reading nearest(List<Reading> rows,long latest,int mins){
         long target=latest-mins*60000L,bestDiff=Long.MAX_VALUE; Reading best=null;
