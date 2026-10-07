@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
         status=t("Connecting to GDH…",13,MUTED,false); status.setPadding(0,dp(4),0,dp(14)); input.addView(status);
 
         input.addView(label("Insulin on board"));
-        iob=number("1.0"); input.addView(iob);
+        iob=number(""); input.addView(iob);
 
         LinearLayout deltas=new LinearLayout(this); deltas.setOrientation(LinearLayout.HORIZONTAL); deltas.setPadding(0,dp(14),0,0);
         d1=deltaBox(deltas,"1 min"); d5=deltaBox(deltas,"5 min"); d15=deltaBox(deltas,"15 min"); input.addView(deltas);
