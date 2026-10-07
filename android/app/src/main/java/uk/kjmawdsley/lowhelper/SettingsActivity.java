@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.WindowInsets;
 import android.widget.*;
 import java.util.Locale;
 
@@ -28,6 +29,12 @@ public class SettingsActivity extends Activity {
 
         LinearLayout root=col();
         root.setPadding(dp(18),dp(18),dp(18),dp(34));
+        root.setOnApplyWindowInsetsListener((v,insets)->{
+            int top=insets.getInsets(WindowInsets.Type.statusBars()).top;
+            int bottom=insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+            v.setPadding(dp(18),dp(18)+top,dp(18),dp(34)+bottom);
+            return insets;
+        });
         scroll.addView(root);
 
         LinearLayout top=new LinearLayout(this);
