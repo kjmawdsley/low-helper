@@ -11,6 +11,7 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -69,6 +70,12 @@ public class MainActivity extends Activity {
 
         LinearLayout root=column();
         root.setPadding(dp(18),dp(18),dp(18),dp(34));
+        root.setOnApplyWindowInsetsListener((v,insets)->{
+            int top=insets.getInsets(WindowInsets.Type.statusBars()).top;
+            int bottom=insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+            v.setPadding(dp(18),dp(18)+top,dp(18),dp(34)+bottom);
+            return insets;
+        });
         scroll.addView(root);
 
         LinearLayout top=new LinearLayout(this);
