@@ -339,24 +339,40 @@ public class MainActivity extends Activity {
         int is=insulin>=2?3:insulin>=1?2:insulin>=.4?1:0;
         int score=bs+ts+is;
 
+        boolean downward = (!Double.isNaN(a) && a < -0.01) || (!Double.isNaN(b) && b < -0.05) || (!Double.isNaN(c) && c < -0.10);
+        boolean sustainedDown = ts >= 2 || ((!Double.isNaN(b) && b <= -0.10) && (!Double.isNaN(c) && c <= -0.15));
+
         if(bg<4){
             detailLine.setText("Below 4.0 mmol/L. The calculator deliberately steps back here.");
             setAction("Treat the hypo now","Use your normal hypo treatment plan. Low Helper should not override it.",BAD);
-        } else if(ts>=3 && (insulin>=.4 || bg<=5.5)){
+        } else if(bg<6.0){
+            if(ts>=3 || (sustainedDown && insulin>=0.4)){
+                detailLine.setText("Below 6.0 mmol/L and "+trend+". Recovery target is "+String.format(Locale.UK,"%.1f",tgt)+" mmol/L.");
+                setAction("Carbs likely needed now","You are below 6.0 and still moving down. Recover above your target, then reassess.",BAD);
+            } else if(downward || sustainedDown){
+                detailLine.setText("Below 6.0 mmol/L with a downward CGM trend. Recovery target is "+String.format(Locale.UK,"%.1f",tgt)+" mmol/L.");
+                setAction("Consider carbs now","You are below 6.0 and trending down. Aim to recover above your target and keep monitoring.",WARN);
+            } else {
+                detailLine.setText("Below 6.0 mmol/L. Recovery target is "+String.format(Locale.UK,"%.1f",tgt)+" mmol/L.");
+                setAction("Recover above target","You are below 6.0. Consider carbs to recover above your target, then reassess.",WARN);
+            }
+        } else if(bg<tgt){
+            if(downward || insulin>=1.0){
+                detailLine.setText("Above 6.0 but still below the recovery target of "+String.format(Locale.UK,"%.1f",tgt)+" mmol/L.");
+                setAction("Recovery not complete","Keep watching closely until you are above your recovery target.",WATCH);
+            } else {
+                detailLine.setText("In the recovery zone: above 6.0 but below "+String.format(Locale.UK,"%.1f",tgt)+" mmol/L.");
+                setAction("Recovery zone","No green all-clear yet. Keep monitoring until you are above your recovery target.",WATCH);
+            }
+        } else if(ts>=3 && insulin>=0.4){
             detailLine.setText("CGM is "+trend+" and meaningful downward pressure is present.");
-            setAction("Fast carbs likely needed now","Strong downward momentum. Correct the immediate fall first, then reassess.",BAD);
-        } else if((ts>=2 && score>=4) || (bg<5.0 && ts>=1)){
-            detailLine.setText("CGM is "+trend+". There is enough evidence of downward movement to take seriously.");
-            setAction("Consider fast carbs now","Meaningful downward trend. Recheck after the initial response rather than stacking carbs blindly.",WARN);
-        } else if(ts<=0 && insulin>=1.0 && bg<=tgt){
-            detailLine.setText("CGM is "+trend+", but meaningful IOB remains.");
-            setAction("Hold and watch closely","No strong fast-carb signal right now. IOB remains, so watch the next reading.",WATCH);
+            setAction("Watch closely","Strong downward momentum is present even though glucose is currently above target.",WATCH);
         } else if(score>=2){
-            detailLine.setText("Some downward risk remains, but the data does not support a high-urgency response.");
+            detailLine.setText("Some downward risk remains, but glucose is currently above the recovery target.");
             setAction("Watch the next reading","Keep monitoring. The current data does not justify a strong immediate response.",WATCH);
         } else {
-            detailLine.setText("CGM is "+trend+" with little evidence of strong downward pressure.");
-            setAction("No immediate carb action","Current glucose and trend do not show a clear need to intervene. Keep monitoring.",GOOD);
+            detailLine.setText("Above recovery target and CGM is "+trend+" with little evidence of strong downward pressure.");
+            setAction("No immediate carb action","You are above your recovery target and the current trend is reassuring. Keep monitoring.",GOOD);
         }
     }
 
